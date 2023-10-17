@@ -14,7 +14,9 @@ public class Brick : MonoBehaviour
     private void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        Debug.Log("Color Inicial: " + colorInicial);
         spriteRenderer.color = colorInicial;
+        Debug.Log("Color SpriteRenderer: " + spriteRenderer.color);
         golpesRecibidos = 0;
     }
 

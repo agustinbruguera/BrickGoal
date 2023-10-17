@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class BallMovement : MonoBehaviour
 {
+    private Vector2 initialPosition; // Posición inicial de la pelota
+
     // public float velocidadInicial = 1.2f;
     // public float velocidadMaxima = 5f;
     // public float aumentoVelocidad = 0.2f;
@@ -76,10 +78,13 @@ public class BallMovement : MonoBehaviour
 
     private Rigidbody2D miRigidbody;
     private bool pelotaLanzada = false;
+    public int goles = 0;
+    public int golesRecibidos = 0;
 
     private void Start()
     {
         miRigidbody = GetComponent<Rigidbody2D>();
+        initialPosition = transform.position;
     }
 
     private void Update()
@@ -97,35 +102,40 @@ public class BallMovement : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Player") || collision.gameObject.CompareTag("Enemy") || collision.gameObject.CompareTag("Wall"))
-        {
-            print("colision");
-            // Calcular la dirección basada en la posición de colisión en la paleta
-            float y = CalcularDireccion(collision.transform.position.y, collision.collider.bounds.size.y);
+    private void OnCollisionEnter2D(Collision2D collision) {
+        if (collision.gameObject.CompareTag("Player") || collision.gameObject.CompareTag("Enemy") || collision.gameObject.CompareTag("Wall") || collision.gameObject.CompareTag("Brick")) {
+            Vector2 normal = collision.contacts[0].normal;
+            miRigidbody.velocity = Vector2.Reflect(miRigidbody.velocity, normal).normalized * Mathf.Min(miRigidbody.velocity.magnitude + aumentoVelocidad, velocidadMaxima);
+        }
 
-            // Aplicar el aumento de velocidad
-            float velocidadActual = Mathf.Min(miRigidbody.velocity.magnitude + aumentoVelocidad, velocidadMaxima);
+        else if (collision.gameObject.CompareTag("Goal")){
+            goles++;
+            ResetBall();
+        }
 
-            // Calcular la nueva dirección de rebote aleatoria
-            Vector2 nuevaDireccion = new Vector2(Random.Range(-1f, 1f), y).normalized;
-            miRigidbody.velocity = nuevaDireccion * velocidadActual;
+        else if (collision.gameObject.CompareTag("PlayerGoal")){
+            golesRecibidos++;
+            ResetBall();
         }
     }
 
     private void LanzarPelota()
     {
-        // Aquí puedes definir la dirección inicial de la pelota
-        Vector2 direccionInicial = new Vector2(1f, 0.5f).normalized;
-        miRigidbody.velocity = direccionInicial * velocidadInicial;
+        // Genera una dirección aleatoria
+        float x = Random.Range(-1f, 1f);
+        float y = Random.Range(-1f, 1f); // Ahora la pelota puede lanzarse hacia arriba o hacia abajo
+
+        Vector2 direccionAleatoria = new Vector2(x, y).normalized;
+        miRigidbody.velocity = direccionAleatoria * velocidadInicial;
     }
 
-    private float CalcularDireccion(float posicionColision, float alturaPaleta)
+
+
+    private void ResetBall()
     {
-        // Calcular una nueva dirección vertical basada en la posición de colisión y la altura de la paleta
-        float offset = posicionColision - transform.position.y;
-        float normalizado = offset / (alturaPaleta / 2f);
-        return normalizado;
+        transform.position = initialPosition; // Establece la posición de la pelota a su posición inicial
+        miRigidbody.velocity = Vector2.zero;           // Detiene cualquier movimiento de la pelota
+        // Aquí puedes agregar cualquier otra lógica adicional para reiniciar la pelota, como establecer su rotación a 0, etc.
+        pelotaLanzada = false;
     }
 }
