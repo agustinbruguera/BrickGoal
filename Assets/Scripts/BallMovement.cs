@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class BallMovement : MonoBehaviour
 {
@@ -80,6 +81,8 @@ public class BallMovement : MonoBehaviour
     private bool pelotaLanzada = false;
     public int goles = 0;
     public int golesRecibidos = 0;
+    public AudioSource audio;
+    public float stopTime = 0.35f;
 
     private void Start()
     {
@@ -88,24 +91,24 @@ public class BallMovement : MonoBehaviour
     }
 
     private void Update()
+{
+    // Si la pelota no ha sido lanzada y se detecta un toque en la pantalla o un clic del mouse, lanzar la pelota
+    if (!pelotaLanzada && (Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)))
     {
-        // Si la pelota no ha sido lanzada y se detecta un toque en la pantalla, lanzar la pelota
-        // if (!pelotaLanzada && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        // {
-        //     LanzarPelota();
-        //     pelotaLanzada = true;
-        // }
-        if (!pelotaLanzada && Input.GetKeyDown(KeyCode.Space))
-        {
-            LanzarPelota();
-            pelotaLanzada = true;
-        }
+        LanzarPelota();
+        pelotaLanzada = true;
     }
+
+    // Restablecer la pelota con la tecla R
+    if(Input.GetKeyDown(KeyCode.R)) ResetBall();
+}
+
 
     private void OnCollisionEnter2D(Collision2D collision) {
         if (collision.gameObject.CompareTag("Player") || collision.gameObject.CompareTag("Enemy") || collision.gameObject.CompareTag("Wall") || collision.gameObject.CompareTag("Brick")) {
             Vector2 normal = collision.contacts[0].normal;
             miRigidbody.velocity = Vector2.Reflect(miRigidbody.velocity, normal).normalized * Mathf.Min(miRigidbody.velocity.magnitude + aumentoVelocidad, velocidadMaxima);
+            if (!collision.gameObject.CompareTag("Wall")) StartCoroutine(PlayAudioForDuration(stopTime));
         }
 
         else if (collision.gameObject.CompareTag("Goal")){
@@ -124,6 +127,10 @@ public class BallMovement : MonoBehaviour
         // Genera una dirección aleatoria
         float x = Random.Range(-1f, 1f);
         float y = Random.Range(-1f, 1f); // Ahora la pelota puede lanzarse hacia arriba o hacia abajo
+        if(y < 0.2f && y > -0.2f){
+            y = Random.Range(-1f, 1f);
+        }
+
 
         Vector2 direccionAleatoria = new Vector2(x, y).normalized;
         miRigidbody.velocity = direccionAleatoria * velocidadInicial;
@@ -137,5 +144,15 @@ public class BallMovement : MonoBehaviour
         miRigidbody.velocity = Vector2.zero;           // Detiene cualquier movimiento de la pelota
         // Aquí puedes agregar cualquier otra lógica adicional para reiniciar la pelota, como establecer su rotación a 0, etc.
         pelotaLanzada = false;
+    }
+
+    IEnumerator PlayAudioForDuration(float duration)
+    {
+        if (audio != null && !audio.isPlaying)
+        {
+            audio.Play();
+            yield return new WaitForSeconds(duration);
+            audio.Stop();
+        }
     }
 }

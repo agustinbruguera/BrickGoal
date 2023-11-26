@@ -10,9 +10,10 @@ public class Brick : MonoBehaviour
 
     private int golpesRecibidos;
     private SpriteRenderer spriteRenderer;
-
+    private GameObject manager;
     private void Start()
     {
+        manager = GameObject.FindGameObjectWithTag("Controller");
         spriteRenderer = GetComponent<SpriteRenderer>();
         Debug.Log("Color Inicial: " + colorInicial);
         spriteRenderer.color = colorInicial;
@@ -42,7 +43,31 @@ public class Brick : MonoBehaviour
     private void DestruirLadrillo()
     {
         // Realizar aquí cualquier acción adicional antes de destruir el ladrillo, si es necesario.
+        sumarPuntos(manager);
+
         Destroy(gameObject);
     }
+
+    private void sumarPuntos(GameObject manager){
+
+        if (manager != null)
+        {
+            BaseController controller = manager.GetComponent<BaseController>();
+            if (controller != null)
+            {
+                // Ahora puedes acceder a la variable pública 'miVariable'
+                controller.points += 100;
+            }
+            else
+            {
+                Debug.LogError("No se encontró el componente BaseController en el objeto.");
+            }
+        }
+        else
+        {
+            Debug.LogError("No se encontró un objeto con la etiqueta 'Controller'");
+        }
+    }
+
 }
 
